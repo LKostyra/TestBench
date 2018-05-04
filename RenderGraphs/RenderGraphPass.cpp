@@ -11,18 +11,22 @@ RenderGraphPass::~RenderGraphPass()
 {
 }
 
-void RenderGraphPass::AddInputBuffer(RenderGraphBuffer::Ptr& ptr)
+void RenderGraphPass::AddInputBuffer(RenderGraphNode::Ptr& ptr)
 {
+    AddInput(ptr);
 }
 
-void RenderGraphPass::AddInputTexture(RenderGraphTexture::Ptr& ptr)
+void RenderGraphPass::AddInputTexture(RenderGraphNode::Ptr& ptr)
 {
+    AddInput(ptr);
 }
 
-void RenderGraphPass::AddOutputBuffer(RenderGraphBuffer::Ptr& ptr)
+void RenderGraphPass::AddOutputBuffer(RenderGraphNode::Ptr& ptr)
 {
+    AddOutput(ptr);
 }
 
-void RenderGraphPass::AddOutputTexture(RenderGraphTexture::Ptr& ptr)
+void RenderGraphPass::AddOutputTexture(RenderGraphNode::Ptr& ptr)
 {
+    AddOutput(ptr);
 }

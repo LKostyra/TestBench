@@ -29,4 +29,3 @@ void Log(LogSeverity severity, const std::string& text, const std::string& file,
 #define LOGW(x) LOG(Common::LogSeverity::Warning, x)
 #define LOGI(x) LOG(Common::LogSeverity::Info, x)
 #define LOGD(x) LOG(Common::LogSeverity::Debug, x)
-

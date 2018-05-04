@@ -21,6 +21,9 @@ protected:
     std::list<RenderGraphNode::Ptr> mInputs;
     std::list<RenderGraphNode::Ptr> mOutputs;
 
+    void AddInput(RenderGraphNode::Ptr& ptr);
+    void AddOutput(RenderGraphNode::Ptr& ptr);
+
 public:
     RenderGraphNode();
     ~RenderGraphNode();

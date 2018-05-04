@@ -22,11 +22,11 @@ public:
     ~RenderGraphPass();
 
     // inputs/outputs for this pass
-    void AddInputBuffer(RenderGraphBuffer::Ptr& ptr);
-    void AddInputTexture(RenderGraphTexture::Ptr& ptr);
+    void AddInputBuffer(RenderGraphNode::Ptr& ptr);
+    void AddInputTexture(RenderGraphNode::Ptr& ptr);
 
-    void AddOutputBuffer(RenderGraphBuffer::Ptr& ptr);
-    void AddOutputTexture(RenderGraphTexture::Ptr& ptr);
+    void AddOutputBuffer(RenderGraphNode::Ptr& ptr);
+    void AddOutputTexture(RenderGraphNode::Ptr& ptr);
 
     TB_INLINE RenderGraphNode::Type GetType() const override
     {

@@ -1,11 +1,11 @@
-#include "RenderGraphBuffer.hpp"
+#include "RenderGraphTexture.hpp"
 
 
-RenderGraphBuffer::RenderGraphBuffer(uint32_t size)
+RenderGraphTexture::RenderGraphTexture(uint32_t size)
     : mSize(size)
 {
 }
 
-RenderGraphBuffer::~RenderGraphBuffer()
+RenderGraphTexture::~RenderGraphTexture()
 {
 }

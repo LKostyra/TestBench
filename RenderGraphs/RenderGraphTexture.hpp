@@ -15,7 +15,7 @@ public:
     RenderGraphTexture(uint32_t size);
     ~RenderGraphTexture();
 
-    TB_INLINE RenderGraphResource::Type GetType() const override
+    TB_INLINE RenderGraphResource::Type GetResourceType() const override
     {
         return RenderGraphResource::Type::Texture;
     }

@@ -1,2 +1,8 @@
-build
+BUILD
 bin
+
+.vs
+*.suo
+Bin
+Obj
+*.vcxproj.user

@@ -32,13 +32,13 @@ public:
         return RenderGraphNode::Type::Resource;
     }
 
-    TB_INLINE void AddSourcePass(Ptr& ptr)
+    TB_INLINE void AddSourcePass(RenderGraphNode::Ptr& ptr)
     {
-        mInputs.push_back(ptr);
+        AddInput(ptr);
     }
 
-    TB_INLINE void AddDestinationPass(Ptr& ptr)
+    TB_INLINE void AddDestinationPass(RenderGraphNode::Ptr& ptr)
     {
-        mOutputs.push_back(ptr);
+        AddOutput(ptr);
     }
 };

@@ -15,7 +15,7 @@ public:
     RenderGraphBuffer(uint32_t size);
     ~RenderGraphBuffer();
 
-    TB_INLINE RenderGraphResource::Type GetType() const override
+    TB_INLINE RenderGraphResource::Type GetResourceType() const override
     {
         return RenderGraphResource::Type::Buffer;
     }
