@@ -1,8 +1,18 @@
 SET(RENDER_GRAPHS_SRCS Main.cpp
+                       RenderGraph.cpp
                        RenderGraphNode.cpp
+                       RenderGraphPass.cpp
+                       RenderGraphResource.cpp
+                       RenderGraphBuffer.cpp
+                       RenderGraphTexture.cpp
                        )
 
-SET(RENDER_GRAPHS_HDRS RenderGraphNode.hpp
+SET(RENDER_GRAPHS_HDRS RenderGraph.hpp
+                       RenderGraphNode.hpp
+                       RenderGraphPass.hpp
+                       RenderPassResource.hpp
+                       RenderGraphBuffer.hpp
+                       RenderGraphTexture.hpp
                        )
 
 ADD_EXECUTABLE(${RENDER_GRAPHS_TARGET}

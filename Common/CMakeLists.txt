@@ -1,7 +1,8 @@
 SET(COMMON_SRCS Logger.cpp
                 )
 
-SET(COMMON_HDRS Logger.hpp
+SET(COMMON_HDRS Common.hpp
+                Logger.hpp
                 LoggerPlatform.hpp
                 )
 
