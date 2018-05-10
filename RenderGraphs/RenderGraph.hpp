@@ -7,14 +7,18 @@
 
 class RenderGraph
 {
+    // collects root passes, which begin the graph
+    std::list<RenderGraphPass::Ptr> mRootPasses;
 
 public:
     RenderGraph();
     ~RenderGraph();
 
-    void AddPass(RenderGraphPass::Ptr& pass);
-    void AddInputBufferToPass(RenderGraphPass::Ptr& pass, RenderGraphBuffer::Ptr& buf);
-    void AddInputTextureToPass(RenderGraphPass::Ptr& pass, RenderGraphTexture::Ptr& buf);
-    void AddOutputBufferToPass(RenderGraphPass::Ptr& pass, RenderGraphBuffer::Ptr& buf);
-    void AddOutputTextureToPass(RenderGraphPass::Ptr& pass, RenderGraphTexture::Ptr& buf);
+    void AddRootPass(RenderGraphPass::Ptr& pass);
+    bool VerifyGraph();
+
+    static void AddInputBufferToPass(RenderGraphPass::Ptr& pass, RenderGraphBuffer::Ptr& buf);
+    static void AddInputTextureToPass(RenderGraphPass::Ptr& pass, RenderGraphTexture::Ptr& tex);
+    static void AddOutputBufferToPass(RenderGraphPass::Ptr& pass, RenderGraphBuffer::Ptr& buf);
+    static void AddOutputTextureToPass(RenderGraphPass::Ptr& pass, RenderGraphTexture::Ptr& tex);
 };

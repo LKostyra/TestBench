@@ -10,6 +10,8 @@
 
 class RenderGraphPass: public RenderGraphNode
 {
+    friend class RenderGraph;
+
 public:
     using Ptr = std::shared_ptr<RenderGraphPass>;
 
@@ -20,13 +22,6 @@ private:
 public:
     RenderGraphPass(uint32_t width, uint32_t height);
     ~RenderGraphPass();
-
-    // inputs/outputs for this pass
-    void AddInputBuffer(RenderGraphNode::Ptr& ptr);
-    void AddInputTexture(RenderGraphNode::Ptr& ptr);
-
-    void AddOutputBuffer(RenderGraphNode::Ptr& ptr);
-    void AddOutputTexture(RenderGraphNode::Ptr& ptr);
 
     TB_INLINE RenderGraphNode::Type GetType() const override
     {

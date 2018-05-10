@@ -19,9 +19,6 @@ public:
         Texture,
     };
 
-protected:
-
-public:
     RenderGraphResource();
     ~RenderGraphResource();
 
@@ -32,12 +29,12 @@ public:
         return RenderGraphNode::Type::Resource;
     }
 
-    TB_INLINE void AddSourcePass(RenderGraphNode::Ptr& ptr)
+    TB_INLINE void AddSourcePass(RenderGraphNode::Ptr ptr)
     {
         AddInput(ptr);
     }
 
-    TB_INLINE void AddDestinationPass(RenderGraphNode::Ptr& ptr)
+    TB_INLINE void AddDestinationPass(RenderGraphNode::Ptr ptr)
     {
         AddOutput(ptr);
     }

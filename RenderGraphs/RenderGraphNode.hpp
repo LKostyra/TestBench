@@ -7,6 +7,8 @@
 
 class RenderGraphNode
 {
+    friend class RenderGraph;
+
 public:
     using Ptr = std::shared_ptr<RenderGraphNode>;
 
@@ -21,8 +23,15 @@ protected:
     std::list<RenderGraphNode::Ptr> mInputs;
     std::list<RenderGraphNode::Ptr> mOutputs;
 
-    void AddInput(RenderGraphNode::Ptr& ptr);
-    void AddOutput(RenderGraphNode::Ptr& ptr);
+    TB_INLINE void AddInput(RenderGraphNode::Ptr ptr)
+    {
+        mInputs.push_back(ptr);
+    }
+
+    TB_INLINE void AddOutput(RenderGraphNode::Ptr ptr)
+    {
+        mOutputs.push_back(ptr);
+    }
 
 public:
     RenderGraphNode();

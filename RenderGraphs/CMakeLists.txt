@@ -10,7 +10,7 @@ SET(RENDER_GRAPHS_SRCS Main.cpp
 SET(RENDER_GRAPHS_HDRS RenderGraph.hpp
                        RenderGraphNode.hpp
                        RenderGraphPass.hpp
-                       RenderPassResource.hpp
+                       RenderGraphResource.hpp
                        RenderGraphBuffer.hpp
                        RenderGraphTexture.hpp
                        )
