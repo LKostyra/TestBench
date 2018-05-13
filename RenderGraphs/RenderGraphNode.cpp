@@ -1,7 +1,8 @@
 #include "RenderGraphNode.hpp"
 
 
-RenderGraphNode::RenderGraphNode()
+RenderGraphNode::RenderGraphNode(const std::string& name)
+    : mName(name)
 {
 }
 

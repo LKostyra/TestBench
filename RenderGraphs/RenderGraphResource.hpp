@@ -19,7 +19,7 @@ public:
         Texture,
     };
 
-    RenderGraphResource();
+    RenderGraphResource(const std::string& name);
     ~RenderGraphResource();
 
     TB_INLINE virtual Type GetResourceType() const = 0;

@@ -1,6 +1,8 @@
 #include "RenderGraph.hpp"
 #include "Logger.hpp"
 
+#include <queue>
+
 
 RenderGraph::RenderGraph()
 {
@@ -10,16 +12,84 @@ RenderGraph::~RenderGraph()
 {
 }
 
+void RenderGraph::PrintNode(const RenderGraphNode::Ptr& node)
+{
+    LOGI("Render Graph node " << node->mName << ":");
+
+    switch (node->GetType())
+    {
+    case RenderGraphNode::Type::Pass:
+    {
+        RenderGraphPass::Ptr pass = std::dynamic_pointer_cast<RenderGraphPass>(node);
+        LOGI("  Type: Pass");
+        LOGI("    Width:  " << pass->GetWidth());
+        LOGI("    Height: " << pass->GetHeight());
+        break;
+    }
+    case RenderGraphNode::Type::Resource:
+    {
+        RenderGraphResource::Ptr res = std::dynamic_pointer_cast<RenderGraphResource>(node);
+
+        LOGI("  Type: Resource");
+        switch (res->GetResourceType())
+        {
+        case RenderGraphResource::Type::Buffer:
+        {
+            RenderGraphBuffer::Ptr buffer = std::dynamic_pointer_cast<RenderGraphBuffer>(res);
+            LOGI("  Resource Type: Buffer");
+            LOGI("    Size: " << buffer->GetSize());
+            break;
+        }
+        case RenderGraphResource::Type::Texture:
+        {
+            RenderGraphTexture::Ptr tex = std::dynamic_pointer_cast<RenderGraphTexture>(res);
+            LOGI("  Resource Type: Texture");
+            LOGI("    Width:  " << tex->GetWidth());
+            LOGI("    Height: " << tex->GetHeight());
+            break;
+        }
+        default:
+        {
+            LOGI("  Resource Type: Unknown");
+        }
+        }
+
+        break;
+    }
+    default:
+    {
+        LOGI("  Type: Unknown");
+    }
+    }
+}
+
 void RenderGraph::AddRootPass(RenderGraphPass::Ptr& pass)
 {
     mRootPasses.push_back(pass);
 }
 
-bool VerifyGraph()
+void RenderGraph::PrintGraph()
 {
+    std::queue<RenderGraphNode::Ptr> nodes;
 
+    for (auto& rn: mRootPasses)
+    {
+        nodes.push(rn);
+    }
 
-    return true;
+    while (!nodes.empty())
+    {
+        RenderGraphNode::Ptr node = nodes.front();
+
+        for (auto& n: node->mOutputs)
+        {
+            nodes.push(n);
+        }
+
+        PrintNode(node);
+
+        nodes.pop();
+    }
 }
 
 void RenderGraph::AddInputBufferToPass(RenderGraphPass::Ptr& pass, RenderGraphBuffer::Ptr& buf)

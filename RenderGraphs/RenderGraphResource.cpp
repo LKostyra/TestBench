@@ -1,7 +1,8 @@
 #include "RenderGraphResource.hpp"
 
 
-RenderGraphResource::RenderGraphResource()
+RenderGraphResource::RenderGraphResource(const std::string& name)
+    : RenderGraphNode(name)
 {
 }
 

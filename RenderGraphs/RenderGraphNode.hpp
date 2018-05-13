@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.hpp"
+#include <string>
 #include <memory>
 #include <list>
 
@@ -20,6 +21,7 @@ public:
     };
 
 protected:
+    std::string mName;
     std::list<RenderGraphNode::Ptr> mInputs;
     std::list<RenderGraphNode::Ptr> mOutputs;
 
@@ -34,7 +36,7 @@ protected:
     }
 
 public:
-    RenderGraphNode();
+    RenderGraphNode(const std::string& name);
     ~RenderGraphNode();
 
     TB_INLINE virtual Type GetType() const = 0;

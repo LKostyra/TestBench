@@ -20,11 +20,21 @@ private:
     uint32_t mHeight;
 
 public:
-    RenderGraphPass(uint32_t width, uint32_t height);
+    RenderGraphPass(const std::string& name, uint32_t width, uint32_t height);
     ~RenderGraphPass();
 
     TB_INLINE RenderGraphNode::Type GetType() const override
     {
         return RenderGraphNode::Type::Pass;
+    }
+
+    TB_INLINE uint32_t GetWidth() const
+    {
+        return mWidth;
+    }
+
+    TB_INLINE uint32_t GetHeight() const
+    {
+        return mHeight;
     }
 };

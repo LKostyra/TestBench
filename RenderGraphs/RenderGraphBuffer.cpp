@@ -1,8 +1,9 @@
 #include "RenderGraphBuffer.hpp"
 
 
-RenderGraphBuffer::RenderGraphBuffer(uint32_t size)
-    : mSize(size)
+RenderGraphBuffer::RenderGraphBuffer(const std::string& name, uint32_t size)
+    : RenderGraphResource(name)
+    , mSize(size)
 {
 }
 
