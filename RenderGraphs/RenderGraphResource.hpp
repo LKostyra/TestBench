@@ -22,19 +22,19 @@ public:
     RenderGraphResource(const std::string& name);
     ~RenderGraphResource();
 
-    TB_INLINE virtual Type GetResourceType() const = 0;
+    LKCOMMON_INLINE virtual Type GetResourceType() const = 0;
 
-    TB_INLINE RenderGraphNode::Type GetType() const override
+    LKCOMMON_INLINE RenderGraphNode::Type GetType() const override
     {
         return RenderGraphNode::Type::Resource;
     }
 
-    TB_INLINE void AddSourcePass(RenderGraphNode::Ptr ptr)
+    LKCOMMON_INLINE void AddSourcePass(RenderGraphNode::Ptr ptr)
     {
         AddInput(ptr);
     }
 
-    TB_INLINE void AddDestinationPass(RenderGraphNode::Ptr ptr)
+    LKCOMMON_INLINE void AddDestinationPass(RenderGraphNode::Ptr ptr)
     {
         AddOutput(ptr);
     }

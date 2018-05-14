@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common.hpp"
+#include "lkCommon/lkCommon.hpp"
 #include <string>
 #include <memory>
 #include <list>
@@ -25,12 +25,12 @@ protected:
     std::list<RenderGraphNode::Ptr> mInputs;
     std::list<RenderGraphNode::Ptr> mOutputs;
 
-    TB_INLINE void AddInput(RenderGraphNode::Ptr ptr)
+    LKCOMMON_INLINE void AddInput(RenderGraphNode::Ptr ptr)
     {
         mInputs.push_back(ptr);
     }
 
-    TB_INLINE void AddOutput(RenderGraphNode::Ptr ptr)
+    LKCOMMON_INLINE void AddOutput(RenderGraphNode::Ptr ptr)
     {
         mOutputs.push_back(ptr);
     }
@@ -39,5 +39,5 @@ public:
     RenderGraphNode(const std::string& name);
     ~RenderGraphNode();
 
-    TB_INLINE virtual Type GetType() const = 0;
+    LKCOMMON_INLINE virtual Type GetType() const = 0;
 };

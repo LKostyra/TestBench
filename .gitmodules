@@ -1,0 +1,3 @@
+[submodule "Deps/lkCommon"]
+	path = Deps/lkCommon
+	url = git@github.com:LKostyra/lkCommon

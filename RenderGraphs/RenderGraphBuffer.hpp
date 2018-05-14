@@ -15,12 +15,12 @@ public:
     RenderGraphBuffer(const std::string& name, uint32_t size);
     ~RenderGraphBuffer();
 
-    TB_INLINE RenderGraphResource::Type GetResourceType() const override
+    LKCOMMON_INLINE RenderGraphResource::Type GetResourceType() const override
     {
         return RenderGraphResource::Type::Buffer;
     }
 
-    TB_INLINE uint32_t GetSize() const
+    LKCOMMON_INLINE uint32_t GetSize() const
     {
         return mSize;
     }

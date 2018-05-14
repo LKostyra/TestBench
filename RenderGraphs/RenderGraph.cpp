@@ -1,5 +1,5 @@
 #include "RenderGraph.hpp"
-#include "Logger.hpp"
+#include <lkCommon/Logger.hpp>
 
 #include <queue>
 

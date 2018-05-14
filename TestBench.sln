@@ -8,8 +8,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderGraphs", "RenderGraph
 		{84117119-0EFF-4213-93AB-E34F8E44725E} = {84117119-0EFF-4213-93AB-E34F8E44725E}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{84117119-0EFF-4213-93AB-E34F8E44725E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

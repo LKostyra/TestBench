@@ -16,17 +16,17 @@ public:
     RenderGraphTexture(const std::string& name, uint32_t width, uint32_t height);
     ~RenderGraphTexture();
 
-    TB_INLINE RenderGraphResource::Type GetResourceType() const override
+    LKCOMMON_INLINE RenderGraphResource::Type GetResourceType() const override
     {
         return RenderGraphResource::Type::Texture;
     }
 
-    TB_INLINE uint32_t GetWidth() const
+    LKCOMMON_INLINE uint32_t GetWidth() const
     {
         return mWidth;
     }
 
-    TB_INLINE uint32_t GetHeight() const
+    LKCOMMON_INLINE uint32_t GetHeight() const
     {
         return mHeight;
     }
