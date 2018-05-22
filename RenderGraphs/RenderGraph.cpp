@@ -1,5 +1,5 @@
 #include "RenderGraph.hpp"
-#include <lkCommon/Logger.hpp>
+#include <lkCommon/Utils/Logger.hpp>
 
 #include <queue>
 
@@ -14,43 +14,34 @@ RenderGraph::~RenderGraph()
 
 void RenderGraph::PrintNode(const RenderGraphNode::Ptr& node)
 {
-    LOGI("Render Graph node " << node->mName << ":");
-
+    LOGI("    Node name: " << node->mName);
     switch (node->GetType())
     {
-    case RenderGraphNode::Type::Pass:
-    {
-        RenderGraphPass::Ptr pass = std::dynamic_pointer_cast<RenderGraphPass>(node);
-        LOGI("  Type: Pass");
-        LOGI("    Width:  " << pass->GetWidth());
-        LOGI("    Height: " << pass->GetHeight());
-        break;
-    }
     case RenderGraphNode::Type::Resource:
     {
         RenderGraphResource::Ptr res = std::dynamic_pointer_cast<RenderGraphResource>(node);
 
-        LOGI("  Type: Resource");
+        LOGI("      Type: Resource");
         switch (res->GetResourceType())
         {
         case RenderGraphResource::Type::Buffer:
         {
             RenderGraphBuffer::Ptr buffer = std::dynamic_pointer_cast<RenderGraphBuffer>(res);
-            LOGI("  Resource Type: Buffer");
-            LOGI("    Size: " << buffer->GetSize());
+            LOGI("      Resource Type: Buffer");
+            LOGI("        Size: " << buffer->GetSize());
             break;
         }
         case RenderGraphResource::Type::Texture:
         {
             RenderGraphTexture::Ptr tex = std::dynamic_pointer_cast<RenderGraphTexture>(res);
-            LOGI("  Resource Type: Texture");
-            LOGI("    Width:  " << tex->GetWidth());
-            LOGI("    Height: " << tex->GetHeight());
+            LOGI("      Resource Type: Texture");
+            LOGI("        Width:  " << tex->GetWidth());
+            LOGI("        Height: " << tex->GetHeight());
             break;
         }
         default:
         {
-            LOGI("  Resource Type: Unknown");
+            LOGI("      Resource Type: Unknown");
         }
         }
 
@@ -58,8 +49,32 @@ void RenderGraph::PrintNode(const RenderGraphNode::Ptr& node)
     }
     default:
     {
-        LOGI("  Type: Unknown");
+        LOGI("      Type: Unknown");
     }
+    }
+}
+
+void RenderGraph::PrintPassNode(const RenderGraphNode::Ptr& node)
+{
+    if (node->GetType() != RenderGraphNode::Type::Pass)
+        return;
+
+    RenderGraphPass::Ptr pass = std::dynamic_pointer_cast<RenderGraphPass>(node);
+
+    LOGW("Render Graph pass node " << node->mName << ":");
+    LOGI("  Width:  " << pass->GetWidth());
+    LOGI("  Height: " << pass->GetHeight());
+
+    LOGI("  Inputs:");
+    for (auto& n: pass->mInputs)
+    {
+        PrintNode(n);
+    }
+
+    LOGI("  Outputs:");
+    for (auto& n: pass->mOutputs)
+    {
+        PrintNode(n);
     }
 }
 
@@ -75,7 +90,13 @@ void RenderGraph::PrintGraph()
     for (auto& rn: mRootPasses)
     {
         nodes.push(rn);
+        rn->mTraverseFlag ^= true;
     }
+
+    if (nodes.empty())
+        return;
+
+    bool currentTraverseFlag = !nodes.front()->mTraverseFlag;
 
     while (!nodes.empty())
     {
@@ -83,10 +104,14 @@ void RenderGraph::PrintGraph()
 
         for (auto& n: node->mOutputs)
         {
-            nodes.push(n);
+            if (n->mTraverseFlag == currentTraverseFlag)
+            {
+                nodes.push(n);
+                n->mTraverseFlag ^= true;
+            }
         }
 
-        PrintNode(node);
+        PrintPassNode(node);
 
         nodes.pop();
     }

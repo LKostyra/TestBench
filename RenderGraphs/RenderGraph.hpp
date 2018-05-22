@@ -10,13 +10,17 @@ class RenderGraph
     // collects root passes, which begin the graph
     std::list<RenderGraphPass::Ptr> mRootPasses;
 
+    // debugging helpers
     void PrintNode(const RenderGraphNode::Ptr& ptr);
+    void PrintPassNode(const RenderGraphNode::Ptr& node);
 
 public:
     RenderGraph();
     ~RenderGraph();
 
     void AddRootPass(RenderGraphPass::Ptr& pass);
+
+    // debugging helper
     void PrintGraph();
 
     static void AddInputBufferToPass(RenderGraphPass::Ptr& pass, RenderGraphBuffer::Ptr& buf);

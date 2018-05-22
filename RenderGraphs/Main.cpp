@@ -1,4 +1,4 @@
-#include <lkCommon/Logger.hpp>
+#include <lkCommon/Utils/Logger.hpp>
 #include "RenderGraph.hpp"
 
 
@@ -38,6 +38,9 @@ int main()
     RenderGraph::AddOutputTextureToPass(forwardPass, outputTex);
 
     // now the graph should be fully traversable, print it to verify
+    rg.PrintGraph();
+
+    LOGI("\n\nSECOND TRAVERSE\n");
     rg.PrintGraph();
 
     return 0;

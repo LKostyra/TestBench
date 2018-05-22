@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lkCommon/lkCommon.hpp"
+#include <lkCommon/lkCommon.hpp>
 #include <string>
 #include <memory>
 #include <list>
@@ -24,6 +24,7 @@ protected:
     std::string mName;
     std::list<RenderGraphNode::Ptr> mInputs;
     std::list<RenderGraphNode::Ptr> mOutputs;
+    bool mTraverseFlag;
 
     LKCOMMON_INLINE void AddInput(RenderGraphNode::Ptr ptr)
     {
