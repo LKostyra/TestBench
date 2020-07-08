@@ -9,9 +9,22 @@
 #include <random>
 
 
+std::string getClassName(const std::string& input)
+{
+    for (int i = 0; i < input.size(); ++i)
+    {
+        if (input[i+1] == ':' && input[i+2] == ':')
+            return input.substr(i+2);
+    }
+    return "";
+}
+
 int main()
 {
+    std::string res = getClassName("myClassName");
+    return 0;
 
+    /*
     // quicksort
     std::vector<uint32_t> arr(20);
     std::iota(arr.begin(), arr.end(), 0);
@@ -56,5 +69,5 @@ int main()
         LOGI("Finding 22: " << tree.Find(22));
         LOGI("Finding 98: " << tree.Find(98));
         LOGI("Finding 3: " << tree.Find(3));
-    }
+    }*/
 }
