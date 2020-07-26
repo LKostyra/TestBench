@@ -403,7 +403,7 @@ BOOL Init(int nCmdShow)
         return FALSE;
 
     gPopupMenu = CreatePopupMenu();
-    AppendMenu(gPopupMenu, MF_STRING | MF_GRAYED, NULL, L"Hi cutie ily <3");
+    AppendMenu(gPopupMenu, MF_STRING | MF_GRAYED, NULL, L"Hi cutie ily <3 (v0.2)");
     AppendMenu(gPopupMenu, MF_SEPARATOR, NULL, NULL);
     AppendMenu(gPopupMenu, MF_STRING, IDM_REHOOK, L"Reset hook");
     AppendMenu(gPopupMenu, MF_STRING | (autostartRegistered ? MF_CHECKED : 0), IDM_AUTOSTART, L"Autostart");
