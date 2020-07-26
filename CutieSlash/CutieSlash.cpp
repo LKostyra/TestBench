@@ -230,6 +230,7 @@ bool RegisterAutostart()
         return false;
     }
 
+    RegFlushKey(key);
     RegCloseKey(key);
     LOG("Autostart entry registered");
     return true;
@@ -252,6 +253,7 @@ bool UnregisterAutostart()
         return false;
     }
 
+    RegFlushKey(key);
     RegCloseKey(key);
     LOG("Autostart entry unregistered");
     return true;
@@ -315,9 +317,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             info.fMask = MIIM_STATE;
             GetMenuItemInfo(gPopupMenu, wmId, FALSE, &info);
             if ((info.fState & MFS_CHECKED) == MFS_CHECKED)
-                UnregisterAutostart();
+            {
+                if (!UnregisterAutostart())
+                    break;
+            }
             else
-                RegisterAutostart();
+            {
+                if (!RegisterAutostart())
+                    break;
+            }
 
             info.fState ^= MFS_CHECKED;
             SetMenuItemInfo(gPopupMenu, wmId, FALSE, &info);
