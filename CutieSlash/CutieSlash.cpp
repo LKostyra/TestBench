@@ -18,8 +18,10 @@ const HKEY AUTOSTART_REG_KEY = HKEY_CURRENT_USER;
 const WCHAR* AUTOSTART_REG_KEY_PATH = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 const WCHAR* AUTOSTART_REG_VALUE = L"CutieSlash";
 const WCHAR* ERROR_MESSAGE_TITLE = L"Cutie slash fail :(";
+const WCHAR* GLOBAL_MUTEX_NAME = L"Global\\CutieSlash_GlobalMutex_Omigosh";
 
 // Global variables
+HANDLE gGlobalMutex;
 HINSTANCE gInstance;
 WCHAR gExePath[MAX_STRING];
 DWORD gExePathSize = 0;
@@ -27,6 +29,14 @@ HHOOK gKeyboardHook;
 HMENU gPopupMenu;
 NOTIFYICONDATA gNotifyIconData;
 
+
+void CleanUp()
+{
+    Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
+    UnhookWindowsHookEx(gKeyboardHook);
+    UnregisterClass(WINDOW_CLASS, gInstance);
+    ReleaseMutex(gGlobalMutex);
+}
 
 LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -264,13 +274,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_ENDSESSION:
-    {
-        Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
-        break;
-    }
     case WM_DESTROY:
     {
-        Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
         PostQuitMessage(0);
         break;
     }
@@ -281,8 +286,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-ATOM Register(HINSTANCE hInstance)
+bool Register(HINSTANCE hInstance)
 {
+    gGlobalMutex = CreateMutexEx(NULL, GLOBAL_MUTEX_NAME, CREATE_MUTEX_INITIAL_OWNER, DELETE);
+    if (gGlobalMutex == NULL)
+    {
+        MessageBox(0, L"Failed to create CutieSlash global mutex .-.", ERROR_MESSAGE_TITLE, 0);
+        return false;
+    }
+
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        MessageBox(0, L"I'm already running, cutie. Check your tray <3", L"Cutie slash is already zoomin", 0);
+        return false;
+    }
+
     WNDCLASSEXW wcex;
     ZeroMemory(&wcex, sizeof(WNDCLASSEXW));
 
@@ -295,17 +313,15 @@ ATOM Register(HINSTANCE hInstance)
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszClassName  = WINDOW_CLASS;
-
-    return RegisterClassExW(&wcex);
+    RegisterClassExW(&wcex);
+    return true;
 }
 
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL Init(int nCmdShow)
 {
-    gInstance = hInstance; // Store instance handle in our global variable
-
     HWND hWnd = CreateWindowW(WINDOW_CLASS, L"Cutie Slash", WS_OVERLAPPEDWINDOW,
                               CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr,
-                              nullptr, hInstance, nullptr);
+                              nullptr, gInstance, nullptr);
 
     if (!hWnd)
         return FALSE;
@@ -325,7 +341,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     gNotifyIconData.cbSize = sizeof(NOTIFYICONDATAW);
     gNotifyIconData.uID = TRAYICON_ID;
     gNotifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-    gNotifyIconData.hIcon = (HICON)LoadImage(hInstance, L"res/CutieSlash.ico", IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_LOADFROMFILE);
+    gNotifyIconData.hIcon = (HICON)LoadImage(gInstance, L"res/CutieSlash.ico", IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_LOADFROMFILE);
     if (gNotifyIconData.hIcon == NULL)
     {
         MessageBox(0, L"Couldn't find cute icon for cute program", ERROR_MESSAGE_TITLE, 0);
@@ -354,35 +370,33 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    gInstance = hInstance;
+
+    // Get executable path
     HMODULE exe = GetModuleHandle(0);
     gExePath[0] = '"';
     gExePathSize = GetModuleFileName(exe, gExePath + 1, 1024);
     gExePath[gExePathSize + 1] = '"';
     gExePathSize += 3;
 
-    // Initialize global strings
-    Register(hInstance);
+    // Register our application class
+    if (!Register(hInstance))
+        return 0;
 
     // Perform application initialization:
-    if (!InitInstance(hInstance, nCmdShow))
-    {
-        return FALSE;
-    }
-
-    MSG msg;
+    if (!Init(nCmdShow))
+        return 0;
 
     gKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardEvent, hInstance, 0);
 
     // Main message loop:
+    MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0))
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    UnhookWindowsHookEx(gKeyboardHook);
-
-    UnregisterClass(WINDOW_CLASS, hInstance);
-
+    CleanUp();
     return (int)msg.wParam;
 }
