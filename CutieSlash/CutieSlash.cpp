@@ -21,22 +21,33 @@ const WCHAR* GLOBAL_MUTEX_NAME = L"Global\\CutieSlash_GlobalMutex_Omigosh";
 
 
 // Global variables
-HANDLE gGlobalMutex;
-HINSTANCE gInstance;
+HANDLE gGlobalMutex = NULL;
+HINSTANCE gInstance = NULL;
 WCHAR gExePath[MAX_STRING];
 DWORD gExePathSize = 0;
-HHOOK gKeyboardHook;
-HMENU gPopupMenu;
+HHOOK gKeyboardHook = NULL;
+HMENU gPopupMenu = NULL;
 NOTIFYICONDATA gNotifyIconData;
 
 
 void CleanUp()
 {
     LOG("CutieSlash shutting down");
-    Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
-    UnhookWindowsHookEx(gKeyboardHook);
+
+    if (gPopupMenu)
+    {
+        Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
+        DestroyMenu(gPopupMenu);
+    }
+
+    if (gKeyboardHook)
+        UnhookWindowsHookEx(gKeyboardHook);
+
     UnregisterClass(WINDOW_CLASS, gInstance);
-    ReleaseMutex(gGlobalMutex);
+
+    if (gGlobalMutex)
+        ReleaseMutex(gGlobalMutex);
+
     CleanUpLog();
 }
 
@@ -63,6 +74,7 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
         {
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
+        {
             if (key == 220)
             {
                 LOGD("WE GOT BACKSLASH DOWN, changing to " << VK_BACK);
@@ -70,9 +82,10 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
                 eaten = true;
             }
             break;
-
+        }
         case WM_KEYUP:
         case WM_SYSKEYUP:
+        {
             if (key == 220)
             {
                 LOGD("WE GOT BACKSLASH UP, changing to " << VK_BACK);
@@ -80,6 +93,7 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
                 eaten = true;
             }
             break;
+        }
         }
     }
 
@@ -222,6 +236,20 @@ bool UnregisterAutostart()
     return true;
 }
 
+bool ResetKeyboardHook()
+{
+    LOG("Resetting CutieSlash keyboard hook");
+    UnhookWindowsHookEx(gKeyboardHook);
+    gKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardEvent, gInstance, 0);
+    if (gKeyboardHook == NULL)
+    {
+        MessageBox(0, L"Failed to reset CutieSlash keyboard hook :(", ERROR_MESSAGE_TITLE, 0);
+        return false;
+    }
+
+    return true;
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -252,6 +280,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // Parse the menu selections:
         switch (wmId)
         {
+        case IDM_REHOOK:
+        {
+            if (!ResetKeyboardHook())
+                PostQuitMessage(0);
+            break;
+        }
         case IDM_AUTOSTART:
         {
             MENUITEMINFO info;
@@ -269,8 +303,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         }
         case IDM_EXIT:
+        {
             DestroyWindow(hWnd);
             break;
+        }
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
@@ -336,6 +372,7 @@ BOOL Init(int nCmdShow)
     gPopupMenu = CreatePopupMenu();
     AppendMenu(gPopupMenu, MF_STRING | MF_GRAYED, NULL, L"Hi cutie ily <3");
     AppendMenu(gPopupMenu, MF_SEPARATOR, NULL, NULL);
+    AppendMenu(gPopupMenu, MF_STRING, IDM_REHOOK, L"Reset hook");
     AppendMenu(gPopupMenu, MF_STRING | (autostartRegistered ? MF_CHECKED : 0), IDM_AUTOSTART, L"Autostart");
     AppendMenu(gPopupMenu, MF_SEPARATOR, NULL, NULL);
     AppendMenu(gPopupMenu, MF_STRING, IDM_EXIT, L"Exit");
@@ -385,14 +422,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Register our application class
     if (!Register(hInstance))
+    {
+        CleanUp();
         return 0;
+    }
 
     // Perform application initialization:
     if (!Init(nCmdShow))
+    {
+        CleanUp();
         return 0;
+    }
 
     LOG("Hooking up CutieSlash keyboard hook");
-    gKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardEvent, hInstance, 0);
+    gKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardEvent, gInstance, 0);
+    if (gKeyboardHook == NULL)
+    {
+        MessageBox(0, L"Failed to set CutieSlash keyboard hook :(", ERROR_MESSAGE_TITLE, 0);
+        CleanUp();
+        return 0;
+    }
 
     // Main message loop:
     LOG("CutieSlash started and running");

@@ -57,5 +57,6 @@ void Log(const char* file, int line, const char* func, const char* msg)
     ss << file << ":" << line << " @ " << func << " - " << msg << std::endl;
     std::cout << ss.str();
     gLogFile << ss.str();
+    gLogFile.flush();
     ss.str(std::string());
 }
