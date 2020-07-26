@@ -1,16 +1,15 @@
-struct IUnknown;
+#include "PCH.hpp"
+
 #include "framework.h"
 #include "CutieSlash.h"
+#include "Log.hpp"
 
-#include <shellapi.h>
-#include <Shlwapi.h>
-#include <iostream>
-#include <vector>
 
 // Global defines
 #define MAX_LOADSTRING 100
 #define NOTIFICATION_TRAY_ICON_MSG (WM_USER + 0x100)
 #define MAX_STRING 1024
+
 
 // Global constants
 const WCHAR* WINDOW_CLASS = L"CutieSlash";
@@ -19,6 +18,7 @@ const WCHAR* AUTOSTART_REG_KEY_PATH = L"Software\\Microsoft\\Windows\\CurrentVer
 const WCHAR* AUTOSTART_REG_VALUE = L"CutieSlash";
 const WCHAR* ERROR_MESSAGE_TITLE = L"Cutie slash fail :(";
 const WCHAR* GLOBAL_MUTEX_NAME = L"Global\\CutieSlash_GlobalMutex_Omigosh";
+
 
 // Global variables
 HANDLE gGlobalMutex;
@@ -32,10 +32,12 @@ NOTIFYICONDATA gNotifyIconData;
 
 void CleanUp()
 {
+    LOG("CutieSlash shutting down");
     Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
     UnhookWindowsHookEx(gKeyboardHook);
     UnregisterClass(WINDOW_CLASS, gInstance);
     ReleaseMutex(gGlobalMutex);
+    CleanUpLog();
 }
 
 LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
@@ -51,9 +53,9 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
         if (wParam == WM_KEYDOWN)
         {
             if ((key >= 'A' && key <= 'Z') || (key == ' '))
-                std::cout << "Keycode = " << static_cast<char>(key) << " (" << key << ")" << std::endl;
+                LOGD("Keycode = " << static_cast<char>(key) << " (" << key << ")");
             else
-                std::cout << "Keycode = " << key << std::endl;
+                LOGD("Keycode = " << key);
         }
         #endif // _DEBUG
 
@@ -63,9 +65,7 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
         case WM_SYSKEYDOWN:
             if (key == 220)
             {
-                #ifdef _DEBUG
-                std::cout << "WE GOT BACKSLASH DOWN, changing to " << VK_BACK << std::endl;
-                #endif // _DEBUG
+                LOGD("WE GOT BACKSLASH DOWN, changing to " << VK_BACK);
                 keybd_event(8, 0, 0, 0);
                 eaten = true;
             }
@@ -75,9 +75,7 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
         case WM_SYSKEYUP:
             if (key == 220)
             {
-                #ifdef _DEBUG
-                std::cout << "WE GOT BACKSLASH UP, changing to " << VK_BACK << std::endl;
-                #endif // _DEBUG
+                LOGD("WE GOT BACKSLASH UP, changing to " << VK_BACK);
                 keybd_event(8, 0, KEYEVENTF_KEYUP, 0);
                 eaten = true;
             }
@@ -115,7 +113,7 @@ bool IsAutostartRegistered(bool& registered)
     {
         if (status == ERROR_FILE_NOT_FOUND)
         {
-            std::cout << "Autostart entry does not exist" << std::endl;
+            LOG("Autostart entry does not exist in Windows registry");
             registered = false;
             return true;
         }
@@ -161,6 +159,7 @@ bool IsAutostartRegistered(bool& registered)
 
     if (!equal)
     {
+        LOG("Autostart registry entry exists but is invalid - someone moved the binary? Updating it");
         // somethin wrong - overwrite with actual new path to autostart so we are up to date yay
         status = RegSetValueEx(key, AUTOSTART_REG_VALUE, 0, REG_SZ, reinterpret_cast<BYTE*>(gExePath), (gExePathSize) * sizeof(WCHAR));
         if (status != ERROR_SUCCESS)
@@ -172,6 +171,8 @@ bool IsAutostartRegistered(bool& registered)
     }
 
     RegCloseKey(key);
+
+    LOG("Found Autostart registry value - Autostart is enabled");
     registered = true;
     return true;
 }
@@ -195,6 +196,7 @@ bool RegisterAutostart()
     }
 
     RegCloseKey(key);
+    LOG("Autostart entry registered");
     return true;
 }
 
@@ -204,7 +206,7 @@ bool UnregisterAutostart()
     LSTATUS status = RegCreateKeyEx(AUTOSTART_REG_KEY, AUTOSTART_REG_KEY_PATH, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
     if (status != ERROR_SUCCESS)
     {
-        MessageBox(0, L"Oop, I failed to open a registry entry ;;", ERROR_MESSAGE_TITLE, 0);
+        MessageBox(0, L"Oop, I failed to open a registry entry :(", ERROR_MESSAGE_TITLE, 0);
         return false;
     }
 
@@ -216,6 +218,7 @@ bool UnregisterAutostart()
     }
 
     RegCloseKey(key);
+    LOG("Autostart entry unregistered");
     return true;
 }
 
@@ -370,7 +373,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    gInstance = hInstance;
+    if (!InitLog())
+        return 0;
 
     // Get executable path
     HMODULE exe = GetModuleHandle(0);
@@ -387,9 +391,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     if (!Init(nCmdShow))
         return 0;
 
+    LOG("Hooking up CutieSlash keyboard hook");
     gKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardEvent, hInstance, 0);
 
     // Main message loop:
+    LOG("CutieSlash started and running");
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0))
     {
