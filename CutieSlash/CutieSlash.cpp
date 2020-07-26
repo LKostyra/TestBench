@@ -7,22 +7,26 @@ struct IUnknown;
 #include <iostream>
 #include <vector>
 
+// Global defines
 #define MAX_LOADSTRING 100
 #define NOTIFICATION_TRAY_ICON_MSG (WM_USER + 0x100)
 #define MAX_STRING 1024
 
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-const WCHAR* szWindowClass = L"CutieSlash";     // the main window class name
-const HKEY hAutostartRegKey = HKEY_CURRENT_USER;
-const WCHAR* szAutostartRegPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run"; // path to autostart reg key
-const WCHAR* szAutostartRegValue = L"CutieSlash";
-const WCHAR* szErrorMessageTitle = L"Cutie slash fail :(";
-WCHAR sExePath[MAX_STRING];
-DWORD sExePathSize = 0;
-HHOOK hKeyboardHook;
-HMENU hPopupMenu;
-NOTIFYICONDATA niData;
+// Global constants
+const WCHAR* WINDOW_CLASS = L"CutieSlash";
+const HKEY AUTOSTART_REG_KEY = HKEY_CURRENT_USER;
+const WCHAR* AUTOSTART_REG_KEY_PATH = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+const WCHAR* AUTOSTART_REG_VALUE = L"CutieSlash";
+const WCHAR* ERROR_MESSAGE_TITLE = L"Cutie slash fail :(";
+
+// Global variables
+HINSTANCE gInstance;
+WCHAR gExePath[MAX_STRING];
+DWORD gExePathSize = 0;
+HHOOK gKeyboardHook;
+HMENU gPopupMenu;
+NOTIFYICONDATA gNotifyIconData;
+
 
 LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -71,7 +75,7 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
         }
     }
 
-    return (eaten ? 1 : CallNextHookEx(hKeyboardHook, nCode, wParam, lParam));
+    return (eaten ? 1 : CallNextHookEx(gKeyboardHook, nCode, wParam, lParam));
 }
 
 void ShowContextMenu(HWND hWnd)
@@ -81,13 +85,22 @@ void ShowContextMenu(HWND hWnd)
     SetForegroundWindow(hWnd);
 
     // TrackPopupMenu blocks the app until TrackPopupMenu returns
-    UINT clicked = TrackPopupMenu(hPopupMenu, 0, curPoint.x, curPoint.y, 0, hWnd, NULL);
+    UINT clicked = TrackPopupMenu(gPopupMenu, 0, curPoint.x, curPoint.y, 0, hWnd, NULL);
 }
 
 bool IsAutostartRegistered(bool& registered)
 {
     HKEY key;
-    LSTATUS status = RegOpenKeyEx(hAutostartRegKey, szAutostartRegPath, 0, KEY_QUERY_VALUE | KEY_READ | KEY_WRITE, &key);
+    LSTATUS status = RegOpenKeyEx(AUTOSTART_REG_KEY, AUTOSTART_REG_KEY_PATH, 0, KEY_QUERY_VALUE | KEY_READ | KEY_WRITE, &key);
+    if (status != ERROR_SUCCESS)
+    {
+        MessageBox(0, L"Got some poopy error when opening autostart registry key", ERROR_MESSAGE_TITLE, 0);
+        return false;
+    }
+
+    DWORD dataSize;
+    DWORD dataType;
+    status = RegQueryValueEx(key, AUTOSTART_REG_VALUE, 0, &dataType, NULL, &dataSize);
     if (status != ERROR_SUCCESS)
     {
         if (status == ERROR_FILE_NOT_FOUND)
@@ -98,46 +111,37 @@ bool IsAutostartRegistered(bool& registered)
         }
         else
         {
-            MessageBox(0, L"Got some poopy error when opening autostart registry key", szErrorMessageTitle, 0);
+            MessageBox(0, L"Got some poopy error when getting value of autostart", ERROR_MESSAGE_TITLE, 0);
+            RegCloseKey(key);
             return false;
         }
     }
 
-    DWORD dataSize;
-    DWORD dataType;
-    status = RegQueryValueEx(key, szAutostartRegValue, 0, &dataType, NULL, &dataSize);
-    if (status != ERROR_SUCCESS)
-    {
-        MessageBox(0, L"Got some poopy error when getting value of autostart", szErrorMessageTitle, 0);
-        RegCloseKey(key);
-        return false;
-    }
-
     if (dataType != REG_SZ)
     {
-        MessageBox(0, L"That registry cutie key is not a string! Someone pooped us!", szErrorMessageTitle, 0);
+        MessageBox(0, L"That registry cutie key is not a string! Someone pooped us!", ERROR_MESSAGE_TITLE, 0);
         RegCloseKey(key);
         return false;
     }
 
     std::vector<WCHAR> data(dataSize / sizeof(WCHAR)); // dataSize is in bytes
-    status = RegQueryValueEx(key, szAutostartRegValue, 0, &dataType, reinterpret_cast<BYTE*>(data.data()), &dataSize);
+    status = RegQueryValueEx(key, AUTOSTART_REG_VALUE, 0, &dataType, reinterpret_cast<BYTE*>(data.data()), &dataSize);
     if (status != ERROR_SUCCESS)
     {
-        MessageBox(0, L"Failed to read registry data (oop)", szErrorMessageTitle, 0);
+        MessageBox(0, L"Failed to read registry data (oop)", ERROR_MESSAGE_TITLE, 0);
         RegCloseKey(key);
         return false;
     }
 
     bool equal = true;
-    if (data.size() != sExePathSize)
+    if (data.size() != gExePathSize)
         equal = false;
 
     if (equal)
     {
         for (uint32_t i = 0; i < data.size(); ++i)
         {
-            if (data[i] != sExePath[i])
+            if (data[i] != gExePath[i])
             {
                 equal = false;
                 break;
@@ -148,10 +152,10 @@ bool IsAutostartRegistered(bool& registered)
     if (!equal)
     {
         // somethin wrong - overwrite with actual new path to autostart so we are up to date yay
-        status = RegSetValueEx(key, szAutostartRegValue, 0, REG_SZ, reinterpret_cast<BYTE*>(sExePath), (sExePathSize) * sizeof(WCHAR));
+        status = RegSetValueEx(key, AUTOSTART_REG_VALUE, 0, REG_SZ, reinterpret_cast<BYTE*>(gExePath), (gExePathSize) * sizeof(WCHAR));
         if (status != ERROR_SUCCESS)
         {
-            MessageBox(0, L"Failed to set autostart registry value (help me)", szErrorMessageTitle, 0);
+            MessageBox(0, L"Failed to set autostart registry value (help me)", ERROR_MESSAGE_TITLE, 0);
             RegCloseKey(key);
             return false;
         }
@@ -165,17 +169,17 @@ bool IsAutostartRegistered(bool& registered)
 bool RegisterAutostart()
 {
     HKEY key = NULL;
-    LSTATUS status = RegCreateKeyEx(hAutostartRegKey, szAutostartRegPath, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
+    LSTATUS status = RegCreateKeyEx(AUTOSTART_REG_KEY, AUTOSTART_REG_KEY_PATH, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
     if (status != ERROR_SUCCESS)
     {
-        MessageBox(0, L"Oop, I failed to create a registry entry ;;", szErrorMessageTitle, 0);
+        MessageBox(0, L"Oop, I failed to create a registry entry ;;", ERROR_MESSAGE_TITLE, 0);
         return false;
     }
 
-    status = RegSetValueEx(key, szAutostartRegValue, 0, REG_SZ, reinterpret_cast<BYTE*>(sExePath), (sExePathSize + 1) * sizeof(WCHAR));
+    status = RegSetValueEx(key, AUTOSTART_REG_VALUE, 0, REG_SZ, reinterpret_cast<BYTE*>(gExePath), (gExePathSize + 1) * sizeof(WCHAR));
     if (status != ERROR_SUCCESS)
     {
-        MessageBox(0, L"Failed to set autostart registry value (help me)", szErrorMessageTitle, 0);
+        MessageBox(0, L"Failed to set autostart registry value (help me)", ERROR_MESSAGE_TITLE, 0);
         RegCloseKey(key);
         return false;
     }
@@ -187,17 +191,17 @@ bool RegisterAutostart()
 bool UnregisterAutostart()
 {
     HKEY key = NULL;
-    LSTATUS status = RegCreateKeyEx(hAutostartRegKey, szAutostartRegPath, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
+    LSTATUS status = RegCreateKeyEx(AUTOSTART_REG_KEY, AUTOSTART_REG_KEY_PATH, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL);
     if (status != ERROR_SUCCESS)
     {
-        MessageBox(0, L"Oop, I failed to open a registry entry ;;", szErrorMessageTitle, 0);
+        MessageBox(0, L"Oop, I failed to open a registry entry ;;", ERROR_MESSAGE_TITLE, 0);
         return false;
     }
 
-    status = RegDeleteValue(key, szAutostartRegValue);
+    status = RegDeleteValue(key, AUTOSTART_REG_VALUE);
     if (status != ERROR_SUCCESS)
     {
-        MessageBox(0, L"Cannot delete this poopy autostart key", szErrorMessageTitle, 0);
+        MessageBox(0, L"Cannot delete this poopy autostart key", ERROR_MESSAGE_TITLE, 0);
         return false;
     }
 
@@ -223,8 +227,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_CONTEXTMENU:
         {
             ShowContextMenu(hWnd);
+            break;
         }
-        break;
+        default:
+            break;
         }
     }
     case WM_COMMAND:
@@ -239,14 +245,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             ZeroMemory(&info, sizeof(info));
             info.cbSize = sizeof(MENUITEMINFO);
             info.fMask = MIIM_STATE;
-            GetMenuItemInfo(hPopupMenu, wmId, FALSE, &info);
+            GetMenuItemInfo(gPopupMenu, wmId, FALSE, &info);
             if ((info.fState & MFS_CHECKED) == MFS_CHECKED)
                 UnregisterAutostart();
             else
                 RegisterAutostart();
 
             info.fState ^= MFS_CHECKED;
-            SetMenuItemInfo(hPopupMenu, wmId, FALSE, &info);
+            SetMenuItemInfo(gPopupMenu, wmId, FALSE, &info);
             break;
         }
         case IDM_EXIT:
@@ -258,10 +264,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_ENDSESSION:
+    {
+        Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
+        break;
+    }
     case WM_DESTROY:
-        Shell_NotifyIcon(NIM_DELETE, &niData);
+    {
+        Shell_NotifyIcon(NIM_DELETE, &gNotifyIconData);
         PostQuitMessage(0);
         break;
+    }
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -282,16 +294,16 @@ ATOM Register(HINSTANCE hInstance)
     wcex.hInstance      = hInstance;
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszClassName  = szWindowClass;
+    wcex.lpszClassName  = WINDOW_CLASS;
 
     return RegisterClassExW(&wcex);
 }
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-    hInst = hInstance; // Store instance handle in our global variable
+    gInstance = hInstance; // Store instance handle in our global variable
 
-    HWND hWnd = CreateWindowW(szWindowClass, L"Cutie Slash", WS_OVERLAPPEDWINDOW,
+    HWND hWnd = CreateWindowW(WINDOW_CLASS, L"Cutie Slash", WS_OVERLAPPEDWINDOW,
                               CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr,
                               nullptr, hInstance, nullptr);
 
@@ -302,29 +314,29 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     if (!IsAutostartRegistered(autostartRegistered))
         return FALSE;
 
-    hPopupMenu = CreatePopupMenu();
-    AppendMenu(hPopupMenu, MF_STRING | MF_GRAYED, NULL, L"Hi cutie ily <3");
-    AppendMenu(hPopupMenu, MF_SEPARATOR, NULL, NULL);
-    AppendMenu(hPopupMenu, MF_STRING | (autostartRegistered ? MF_CHECKED : 0), IDM_AUTOSTART, L"Autostart");
-    AppendMenu(hPopupMenu, MF_SEPARATOR, NULL, NULL);
-    AppendMenu(hPopupMenu, MF_STRING, IDM_EXIT, L"Exit");
+    gPopupMenu = CreatePopupMenu();
+    AppendMenu(gPopupMenu, MF_STRING | MF_GRAYED, NULL, L"Hi cutie ily <3");
+    AppendMenu(gPopupMenu, MF_SEPARATOR, NULL, NULL);
+    AppendMenu(gPopupMenu, MF_STRING | (autostartRegistered ? MF_CHECKED : 0), IDM_AUTOSTART, L"Autostart");
+    AppendMenu(gPopupMenu, MF_SEPARATOR, NULL, NULL);
+    AppendMenu(gPopupMenu, MF_STRING, IDM_EXIT, L"Exit");
 
-    ZeroMemory(&niData, sizeof(NOTIFYICONDATA));
-    niData.cbSize = sizeof(NOTIFYICONDATAW);
-    niData.uID = TRAYICON_ID;
-    niData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-    niData.hIcon = (HICON)LoadImage(hInstance, L"res/CutieSlash.ico", IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_LOADFROMFILE);
-    if (niData.hIcon == NULL)
+    ZeroMemory(&gNotifyIconData, sizeof(NOTIFYICONDATA));
+    gNotifyIconData.cbSize = sizeof(NOTIFYICONDATAW);
+    gNotifyIconData.uID = TRAYICON_ID;
+    gNotifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+    gNotifyIconData.hIcon = (HICON)LoadImage(hInstance, L"res/CutieSlash.ico", IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_LOADFROMFILE);
+    if (gNotifyIconData.hIcon == NULL)
     {
-        MessageBox(0, L"Couldn't find cute icon for cute program", szErrorMessageTitle, 0);
+        MessageBox(0, L"Couldn't find cute icon for cute program", ERROR_MESSAGE_TITLE, 0);
         return FALSE;
     }
-    niData.hWnd = hWnd;
-    niData.dwInfoFlags = NIIF_INFO;
-    niData.uVersion = NOTIFYICON_VERSION_4;
-    wcsncpy_s(niData.szTip, 128, L"Cutie slash replacer hihi <3", 28);
-    niData.uCallbackMessage = NOTIFICATION_TRAY_ICON_MSG;
-    Shell_NotifyIcon(NIM_ADD, &niData);
+    gNotifyIconData.hWnd = hWnd;
+    gNotifyIconData.dwInfoFlags = NIIF_INFO;
+    gNotifyIconData.uVersion = NOTIFYICON_VERSION_4;
+    wcsncpy_s(gNotifyIconData.szTip, 128, L"Cutie slash replacer hihi <3", 28);
+    gNotifyIconData.uCallbackMessage = NOTIFICATION_TRAY_ICON_MSG;
+    Shell_NotifyIcon(NIM_ADD, &gNotifyIconData);
 
     #ifdef _DEBUG
     ShowWindow(hWnd, nCmdShow);
@@ -343,10 +355,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     HMODULE exe = GetModuleHandle(0);
-    sExePath[0] = '"';
-    sExePathSize = GetModuleFileName(exe, sExePath + 1, 1024);
-    sExePath[sExePathSize + 1] = '"';
-    sExePathSize += 3;
+    gExePath[0] = '"';
+    gExePathSize = GetModuleFileName(exe, gExePath + 1, 1024);
+    gExePath[gExePathSize + 1] = '"';
+    gExePathSize += 3;
 
     // Initialize global strings
     Register(hInstance);
@@ -359,7 +371,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardEvent, hInstance, 0);
+    gKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)KeyboardEvent, hInstance, 0);
 
     // Main message loop:
     while (GetMessage(&msg, nullptr, 0, 0))
@@ -368,9 +380,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         DispatchMessage(&msg);
     }
 
-    UnhookWindowsHookEx(hKeyboardHook);
+    UnhookWindowsHookEx(gKeyboardHook);
 
-    UnregisterClass(szWindowClass, hInstance);
+    UnregisterClass(WINDOW_CLASS, hInstance);
 
     return (int)msg.wParam;
 }
