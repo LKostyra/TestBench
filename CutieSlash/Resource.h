@@ -3,6 +3,7 @@
 // Used by CutieSlash.rc
 
 #define IDM_EXIT				105
+#define IDM_AUTOSTART			106
 #define TRAYICON_ID				3
 #define ID_TRAY_EXIT			0x2137
 #ifndef IDC_STATIC
