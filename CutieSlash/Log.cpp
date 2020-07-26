@@ -33,7 +33,10 @@ bool InitLog()
 
     gLogFile.open(fileName.str(), std::fstream::out);
     if (!gLogFile.good())
+    {
+        MessageBox(0, L"Oopsie while opening log file", L"CutieSlash logger failure", 0);
         return false;
+    }
 
     ss.setf(std::ios::fixed, std::ios::floatfield);
     ss.precision(6);

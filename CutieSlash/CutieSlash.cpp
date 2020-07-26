@@ -100,6 +100,27 @@ LRESULT CALLBACK KeyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
     return (eaten ? 1 : CallNextHookEx(gKeyboardHook, nCode, wParam, lParam));
 }
 
+bool SetCWD()
+{
+    HMODULE exe = GetModuleHandle(0);
+    WCHAR exePath[1024];
+    DWORD size = GetModuleFileName(exe, exePath, 1023);
+    exePath[size] = 0;
+
+    std::wstring exePathString(exePath);
+    size_t lastSlash = exePathString.rfind('\\');
+    if (lastSlash == std::wstring::npos)
+    {
+        MessageBox(0, L"Invalid path to CutieSlash binary", L"CutieSlash logger failure", 0);
+        return false;
+    }
+
+    exePathString = exePathString.substr(0, lastSlash + 1);
+    SetCurrentDirectory(exePathString.c_str());
+
+    return true;
+}
+
 void ShowContextMenu(HWND hWnd)
 {
     POINT curPoint;
@@ -313,6 +334,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_ENDSESSION:
+    {
+        CleanUp();
+        break;
+    }
     case WM_DESTROY:
     {
         PostQuitMessage(0);
@@ -410,13 +435,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    if (!SetCWD())
+        return 0;
+
     if (!InitLog())
         return 0;
 
     // Get executable path
     HMODULE exe = GetModuleHandle(0);
     gExePath[0] = '"';
-    gExePathSize = GetModuleFileName(exe, gExePath + 1, 1024);
+    gExePathSize = GetModuleFileName(exe, gExePath + 1, MAX_STRING - 3);
     gExePath[gExePathSize + 1] = '"';
     gExePathSize += 3;
 
